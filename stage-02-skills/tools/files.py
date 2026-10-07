@@ -93,3 +93,37 @@ def write_file(path: str, content: str) -> str:
     Thành công: {"ok": true, "path": ..., "bytes": ..., "status": "created" | "updated"}. Lỗi: {"ok": false, "error": {...}}.
     """
     return json.dumps(_write(paths.WORKSPACE_DIR, path, content), ensure_ascii=False)
+
+
+def _list(workspace: Path, path: str) -> dict:
+    target, error = _resolve(workspace, path)
+    if error:
+        return error
+    rel = target.relative_to(workspace.resolve()).as_posix()
+    if not target.exists():
+        return _error("DIRECTORY_NOT_FOUND", f"Không tìm thấy thư mục: {rel}")
+    if not target.is_dir():
+        return _error("NOT_A_DIRECTORY", f"Đây là file, không phải thư mục: {rel}")
+    entries = []
+    for child in sorted(target.iterdir(), key=lambda p: p.name):
+        child_rel = child.relative_to(workspace.resolve()).as_posix()
+        child_type = "directory" if child.is_dir() else "file"
+        entries.append({
+            "name": child.name,
+            "path": child_rel,
+            "type": child_type,
+        })
+    return {"ok": True, "path": rel, "entries": entries}
+
+
+@tool
+def list_files(path: str = ".") -> str:
+    """Liệt kê các mục trực tiếp trong một thư mục thuộc workspace và trả về JSON.
+
+    path là đường dẫn tương đối workspace, ví dụ: data/policies, data, output, ".".
+    Trả về danh sách các mục trực tiếp kèm tên (name), đường dẫn tương đối (path) và loại (type: "file" | "directory").
+    Thành công: {"ok": true, "path": ..., "entries": [{"name": ..., "path": ..., "type": ...}]}.
+    Lỗi: {"ok": false, "error": {"code": ..., "message": ...}}.
+    """
+    return json.dumps(_list(paths.WORKSPACE_DIR, path), ensure_ascii=False)
+

@@ -5,8 +5,9 @@ import json
 import pytest
 
 from reset_workspace import WorkspaceError, ensure_workspace, reset_workspace
-from tools import read_file, write_file
-from tools.files import MAX_READ_BYTES, _read, _write
+from tools import list_files, read_file, write_file
+from tools.files import MAX_READ_BYTES, _list, _read, _write
+
 
 
 @pytest.fixture
@@ -78,11 +79,54 @@ def test_write_absolute_and_symlink_escape_rejected(ws, tmp_path):
     assert list(outside.iterdir()) == []
 
 
+def test_list_ok(ws):
+    (ws / "data" / "sub").mkdir()
+    (ws / "data" / "sub" / "inner.txt").write_text("inner")
+    result = _list(ws, "data")
+    assert result["ok"] is True
+    assert result["path"] == "data"
+    assert result["entries"] == [
+        {"name": "note.md", "path": "data/note.md", "type": "file"},
+        {"name": "sub", "path": "data/sub", "type": "directory"},
+    ]
+
+
+def test_list_file_is_not_directory(ws):
+    result = _list(ws, "data/note.md")
+    assert result["ok"] is False and result["error"]["code"] == "NOT_A_DIRECTORY"
+
+
+def test_list_missing_directory(ws):
+    result = _list(ws, "data/nonexistent")
+    assert result["ok"] is False and result["error"]["code"] == "DIRECTORY_NOT_FOUND"
+
+
+@pytest.mark.parametrize("path", ["../secret", "data/../../secret"])
+def test_list_traversal_blocked(ws, path):
+    result = _list(ws, path)
+    assert result["ok"] is False and result["error"]["code"] == "PATH_OUTSIDE_WORKSPACE"
+
+
+def test_list_absolute_path_blocked(ws):
+    result = _list(ws, str(ws / "data"))
+    assert result["ok"] is False and result["error"]["code"] == "PATH_OUTSIDE_WORKSPACE"
+
+
+def test_list_symlink_escape_blocked(ws, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (ws / "data" / "escape").symlink_to(outside, target_is_directory=True)
+    result = _list(ws, "data/escape")
+    assert result["ok"] is False and result["error"]["code"] == "PATH_OUTSIDE_WORKSPACE"
+
+
 def test_tools_return_json_against_project_workspace(lab_dirs):
     assert json.loads(read_file.invoke({"path": "data/weekly_notes.md"}))["ok"] is True
+    assert json.loads(list_files.invoke({"path": "data"}))["ok"] is True
     written = json.loads(write_file.invoke({"path": "output/t.md", "content": "ok"}))
     assert written["status"] == "created"
     assert json.loads(read_file.invoke({"path": "output/t.md"}))["content"] == "ok"
+
 
 
 def test_reset_restores_fixtures_and_requires_marker(tmp_path):

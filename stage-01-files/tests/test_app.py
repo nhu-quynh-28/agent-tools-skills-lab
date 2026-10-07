@@ -49,8 +49,9 @@ def test_renders_title_and_state_inspector(configured_env):
     assert "State & Context" in [h.value for h in at.subheader]
     labels = [e.label for e in at.expander]
     assert "Context cấu hình: system prompt" in labels
-    assert any(label.startswith("Tools được cấp (2)") for label in labels)
+    assert any(label.startswith("Tools được cấp (3)") for label in labels)
     assert "File đầu ra" in [h.value for h in at.subheader]
+
 
 
 def test_two_turns_history_not_duplicated_and_rerun_does_not_call_model(mock_model):

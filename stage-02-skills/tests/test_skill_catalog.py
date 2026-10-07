@@ -13,9 +13,14 @@ def write_skill(workspace, folder, text):
 
 def test_fixture_catalog_metadata():
     catalog = scan_skills(paths.FIXTURES_DIR)
-    assert [(s.name, s.location) for s in catalog.skills] == [("weekly-report", "skills/weekly-report/SKILL.md")]
-    assert "báo cáo tuần" in catalog.skills[0].description
+    assert [(s.name, s.location) for s in catalog.skills] == [
+        ("refund-policy", "skills/refund-policy/SKILL.md"),
+        ("weekly-report", "skills/weekly-report/SKILL.md"),
+    ]
+    assert any("báo cáo tuần" in s.description for s in catalog.skills)
+    assert any("hoàn tiền" in s.description for s in catalog.skills)
     assert catalog.diagnostics == []
+
 
 
 def test_initial_prompt_has_catalog_but_no_body_or_reference(lab_dirs):

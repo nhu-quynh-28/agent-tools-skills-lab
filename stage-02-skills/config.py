@@ -9,7 +9,8 @@ import paths
 
 PROJECT_NAME = "stage-02-skills"
 APP_TITLE = "Stage 02: Skills"
-CAPABILITY_TEXT = "Tools: read_file, write_file. Skills: catalog tự phát hiện từ workspace/skills, model tự load SKILL.md bằng read_file. Không chạy lệnh."
+CAPABILITY_TEXT = "Tools: list_files, read_file, write_file. Skills: catalog tự phát hiện từ workspace/skills, model tự load SKILL.md bằng read_file. Không chạy lệnh."
+
 
 # Giới hạn số lần gọi model trong một lượt chat (ModelCallLimitMiddleware).
 MODEL_CALL_LIMIT = 8
@@ -28,7 +29,8 @@ class Settings:
 
 def load_settings() -> tuple[Settings | None, list[str]]:
     """Đọc .env của project này. Trả (settings, []) hoặc (None, danh sách biến còn thiếu)."""
-    load_dotenv(paths.ENV_PATH, override=False)
+    load_dotenv(paths.ENV_PATH, override=True)
+
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     model_name = os.getenv("MODEL_NAME", "").strip()
     base_url = os.getenv("OPENAI_BASE_URL", "").strip() or None
