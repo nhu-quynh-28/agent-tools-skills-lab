@@ -28,7 +28,8 @@ class Settings:
 
 def load_settings() -> tuple[Settings | None, list[str]]:
     """Đọc .env của project này. Trả (settings, []) hoặc (None, danh sách biến còn thiếu)."""
-    load_dotenv(paths.ENV_PATH, override=False)
+    load_dotenv(paths.ENV_PATH, override=True)
+
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     model_name = os.getenv("MODEL_NAME", "").strip()
     base_url = os.getenv("OPENAI_BASE_URL", "").strip() or None
